@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agrius-jaws-deployment
+  labels:
+    app: agrius-jaws-server
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: agrius-jaws
+  template:
+    metadata:
+      labels:
+        app: agrius-jaws
+    spec:
+      containers:
+      - name: agrius-jaws
+        image: nandanrao/agrius-jaws
+        resources:
+          requests:
+            cpu: "1000m"
+            memory: "2000Mi"
+        ports:
+        - containerPort: 5000
+        envFrom:
+        - secretRef:
+            name: agrius-jaws-envs
