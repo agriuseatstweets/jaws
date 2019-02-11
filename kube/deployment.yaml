@@ -3,9 +3,9 @@ kind: Deployment
 metadata:
   name: agrius-jaws-deployment
   labels:
-    app: agrius-jaws-server
+    app: agrius-jaws
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: agrius-jaws
@@ -19,10 +19,18 @@ spec:
         image: nandanrao/agrius-jaws
         resources:
           requests:
-            cpu: "1000m"
-            memory: "2000Mi"
+            cpu: "1500m"
+            memory: "1000Mi"
         ports:
         - containerPort: 5000
         envFrom:
         - secretRef:
             name: agrius-jaws-envs
+        volumeMounts:
+            - name: keys
+              mountPath: /usr/src/app/keys
+              readOnly: true
+      volumes:
+        - name: keys
+          secret:
+            secretName: agrius-jaws-keys
