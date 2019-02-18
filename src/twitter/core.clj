@@ -17,17 +17,18 @@
       (catch Exception e (>! exch e)))
     (recur)))
 
-(defn run [publishers queue ch exch terms]
+(defn run [publishers queue ch exch terms followings]
   (try
     (do (consumer queue ch exch)
         (db/writer publishers ch exch)
-        (tw/connect-queue queue terms))
+        (tw/connect-queue queue terms followings))
     (catch Exception e (>!! exch e))))
 
 
 (defn -main [& args]
   ;; TODO get terms... reget on error and use error channel to restart...
-  (let [terms ["worldcancerday" "halftimeshow" "trump" "brexit"]]
+  (let [terms ["tb" "yolo" "trump" "brexit"]
+        followings [124690469 25073877]]
     (loop []
       ;; We restart everything on an error.
       (log/debug (str "Starting Main Process with terms: " terms))
@@ -39,7 +40,7 @@
             ;; so that publishers of dif topics in dif apps
             publishers [(db/make-publisher "agrius-tweethouse-test")
                         (db/make-publisher "agrius-tweetdash-test")]
-            client (run publishers queue ch exch terms)
+            client (run publishers queue ch exch terms followings)
             error (<!! exch)]
         (do
           (log/error error "Error in channel!")

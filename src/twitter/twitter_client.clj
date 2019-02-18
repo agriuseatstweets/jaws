@@ -14,8 +14,9 @@
            (env :t-access-token)
            (env :t-token-secret)))
 
-(defn create-endpoint [terms]
+(defn create-endpoint [terms followings]
   (-> (StatusesFilterEndpoint.)
+      (.followings followings)
       (.trackTerms terms)))
 
 (defn create-client
@@ -31,8 +32,8 @@
 
 (defn connect-client [client] (.connect client) client)
 
-(defn connect-queue [queue terms] 
+(defn connect-queue [queue terms followings]
   (let [auth (create-auth)
-        endpoint (create-endpoint terms)
+        endpoint (create-endpoint terms followings)
         client (create-client auth endpoint queue)]
     (connect-client client)))
