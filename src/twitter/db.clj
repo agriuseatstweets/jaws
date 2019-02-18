@@ -32,7 +32,7 @@
      future
      (reify ApiFutureCallback
        (onFailure [this throwable] (go (>! exch throwable)))
-       (onSuccess [this id] (log/info (str "Published tweet: " id)))))))
+       (onSuccess [this id] (log/debug (str "Published tweet: " id)))))))
 
 (defn credentials-provider []
   (FixedCredentialsProvider/create 
