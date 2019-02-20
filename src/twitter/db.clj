@@ -9,6 +9,7 @@
            (com.google.pubsub.v1 PubsubMessage ProjectTopicName)
            (com.google.protobuf ByteString)
            (com.google.cloud.pubsub.v1 Publisher)
+           java.util.concurrent.TimeUnit
            (com.google.api.core ApiFuture ApiFutures ApiFutureCallback)))
 
 (defn make-id [id] (str "tw:" id))
@@ -28,16 +29,14 @@
 (defn publish-message
   [publisher data exch]
   (let [future (.publish publisher (build-message data))]
-    (ApiFutures/addCallback
-     future
-     (reify ApiFutureCallback
-       (onFailure [this throwable] (go (>! exch throwable)))
-       (onSuccess [this id] (log/debug (str "Published tweet: " id)))))))
+    (try
+      (log/debug (str "Published tweet: " @future))
+      (catch Throwable e (go (>! exch e))))))
 
 (defn credentials-provider []
-  (FixedCredentialsProvider/create 
-   (GoogleCredentials/fromStream 
-    (input-stream 
+  (FixedCredentialsProvider/create
+   (GoogleCredentials/fromStream
+    (input-stream
      (env :google-application-credentials)))))
 
 (defn get-topic [topic] (ProjectTopicName/of (env :google-project-id) topic))
@@ -48,11 +47,14 @@
    (.setCredentialsProvider (credentials-provider))
    (.build)))
 
-(defn writer [publishers ch exch]
+
+(defn writer [publishers queue exch]
   (doseq [n (range (Integer/parseInt (env :t-threads)))]
     (go-loop []
       (try
-        (let [msg (<! ch)]
-          (doall (map #(publish-message % msg exch) publishers)))
+        (when-let [msg (.poll queue 500 TimeUnit/MILLISECONDS)]
+          (do
+            (log/debug (str "Queue size: " (.size queue)))
+            (doall (map #(publish-message % msg exch) publishers))))
         (catch Exception e (>! exch e)))
       (recur))))
