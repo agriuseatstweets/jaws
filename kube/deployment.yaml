@@ -19,13 +19,16 @@ spec:
         image: nandanrao/agrius-jaws
         resources:
           requests:
-            cpu: "1500m"
-            memory: "1000Mi"
+            cpu: "1000m"
+            memory: "2048Mi"
         ports:
         - containerPort: 5000
         envFrom:
         - secretRef:
             name: agrius-jaws-envs
+        env:
+        - name: JVM_OPTS
+          value: "-Xms512M -Xmx2048M"
         volumeMounts:
             - name: keys
               mountPath: /usr/src/app/keys
