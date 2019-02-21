@@ -1,3 +1,4 @@
+
 (ns twitter.db
   (:require [cheshire.core :refer [parse-string]]
             [clojure.tools.logging :as log]
@@ -48,13 +49,13 @@
    (.build)))
 
 
-(defn writer [publishers queue exch]
+(defn writer [publisher queue exch]
   (doseq [n (range (Integer/parseInt (env :t-threads)))]
     (go-loop []
       (try
         (when-let [msg (.poll queue 500 TimeUnit/MILLISECONDS)]
           (do
             (log/debug (str "Queue size: " (.size queue)))
-            (doall (map #(publish-message % msg exch) publishers))))
+            (publish-message publisher msg exch)))
         (catch Exception e (>! exch e)))
       (recur))))

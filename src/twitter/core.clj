@@ -17,19 +17,16 @@
 
 (defn -main [& args]
   ;; TODO get terms... reget on error and use error channel to restart...
+  ;; (log/debug (str "Starting Main Process with terms: " terms))
   (let [terms ["tb" "yolo" "trump" "brexit"]
-        followings [124690469 25073877]]
-    (loop []
-      ;; We restart everything on an error.
-      (log/debug (str "Starting Main Process with terms: " terms))
-      (let [queue (create-queue (Integer/parseInt (env :t-queue-size)))
-            exch (chan)
+        followings [124690469 25073877]
+        queue (create-queue (Integer/parseInt (env :t-queue-size)))
+        exch (chan)
+        publisher (db/make-publisher (env :jaws-topic))
+        client (run publisher queue exch terms followings)
+        error (<!! exch)]
 
-            publishers [(db/make-publisher "agrius-tweethouse-test")
-                        (db/make-publisher "agrius-tweetdash-test")]
-            client (run publishers queue ch exch terms followings)
-            error (<!! exch)]
-        (do
-          (log/error error "Error in channel!")
-          (.stop client)))
-      (recur))))
+    (do
+      (log/error error "Error tweeting!")
+      (.stop client)
+      (throw error))))

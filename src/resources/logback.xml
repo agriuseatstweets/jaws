@@ -1,15 +1,30 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
   <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
-    <layout class="ch.qos.logback.classic.PatternLayout">
+    <target>System.out</target>
+    <encoder>
       <Pattern>
 	%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n
       </Pattern>
-    </layout>
+    </encoder>
+  </appender>
+
+  <appender name="STDERR" class="ch.qos.logback.core.ConsoleAppender">
+    <target>System.err</target>
+    <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+      <level>ERROR</level>
+    </filter>
+
+    <encoder>
+      <Pattern>
+	%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n
+      </Pattern>
+    </encoder>
   </appender>
 
   <root level="${LOG_LEVEL:-INFO}">
     <appender-ref ref="STDOUT" />
+    <appender-ref ref="STDERR" />
   </root>
 
 </configuration>
