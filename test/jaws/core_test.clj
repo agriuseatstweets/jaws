@@ -1,6 +1,4 @@
-(ns twitter.core-test
+(ns jaws.core-test
   (:require [clojure.test :refer :all]
             [clojure.core.async :refer :all]
-            [twitter.core :refer :all]))
-
-
+            [jaws.core :refer :all]))

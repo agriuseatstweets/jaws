@@ -1,5 +1,4 @@
-
-(ns twitter.db
+(ns jaws.db
   (:require [cheshire.core :refer [parse-string]]
             [clojure.tools.logging :as log]
             [clojure.core.async :refer [>! <! <!! >!! chan go-loop go]]
@@ -12,14 +11,6 @@
            (com.google.cloud.pubsub.v1 Publisher)
            java.util.concurrent.TimeUnit
            (com.google.api.core ApiFuture ApiFutures ApiFutureCallback)))
-
-(defn make-id [id] (str "tw:" id))
-(defn get-status [json] (parse-string json true))
-(defn get-user [status] (get-in status [:user :screen_name]))
-(defn get-body [status] (:text status))
-(defn get-date [status]
-  (let [date-format (java.text.SimpleDateFormat. "EEE MMM dd HH:mm:ss Z yyyy")]
-    (.parse  date-format (:created_at status))))
 
 (defn build-message
   [data]

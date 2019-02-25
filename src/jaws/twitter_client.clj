@@ -1,5 +1,6 @@
-(ns twitter.twitter-client
-     (:require [environ.core :refer [env]])
+(ns jaws.twitter-client
+     (:require [environ.core :refer [env]]
+               [clojure.core.async :refer [>! <! <!! >!! chan go-loop go timeout alts!]])
      (:import (com.twitter.hbc
                ClientBuilder
                httpclient.auth.OAuth1
@@ -37,3 +38,4 @@
         endpoint (create-endpoint terms followings)
         client (create-client auth endpoint queue)]
     (connect-client client)))
+
