@@ -1,7 +1,7 @@
 (ns jaws.db
   (:require [cheshire.core :refer [parse-string]]
             [clojure.tools.logging :as log]
-            [clojure.core.async :refer [>! <! <!! >!! chan go-loop go]]
+            [clojure.core.async :refer [>! <! <!! >!! chan go-loop go timeout]]
             [clojure.java.io :refer [input-stream]]
             [environ.core :refer [env]])
   (:import (com.google.auth.oauth2 GoogleCredentials)
@@ -44,9 +44,11 @@
   (doseq [n (range (Integer/parseInt (env :t-threads)))]
     (go-loop []
       (try
-        (when-let [msg (.poll queue 500 TimeUnit/MILLISECONDS)]
-          (do
-            (log/debug (str "Queue size: " (.size queue)))
-            (publish-message publisher msg exch)))
+        (let [msg (.poll queue)]
+          (if (nil? msg)
+            (<! (timeout 250)) ;; make variable
+            (do
+              (log/debug (str "Queue size: " (.size queue)))
+              (publish-message publisher msg exch))))
         (catch Exception e (>! exch e)))
       (recur))))

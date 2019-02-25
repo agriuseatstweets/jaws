@@ -22,72 +22,31 @@
 (defn run [publishers queue exch terms followings]
   (try
     (do (db/writer publishers queue exch)
-        (tw/connect-queue queue terms followings)
-        (log/info "CONNECTED TO TWITTER"))
-    
+        (tw/connect-queue queue terms followings))
     (catch Exception e (>!! exch e))))
 
-;; if not use error channel, what else can be used?
-;; pubsub channel?
 
-(defn deny []
-  {:status 403 :body "Access Denied"})
-
-(defn authorize [ctx]
-  (if-let [pass (get-in ctx [:headers "authorization"])]
-    (if (= pass (env :sheetsy-secret))
-      ctx
-      (deny))
-    (deny)))
-
-(defn debounce
-  ([in ms] (debounce in (chan) ms))
-  ([in out ms]
-   (go-loop [val (<! in)]
-     (let [timer (timeout ms)
-           [new-val ch] (alts! [in timer])]
-       (condp = ch
-         timer (do (>! out val) (recur (<! in)))
-         in (if new-val (recur new-val)))))
-   out))
-
-(defn handle [ch a]
-  (go 
-    (<! (timeout 1000))
-    (>! ch (Exception. "Restart Jaws."))
-    (log/info "HERE")
-    {:status 200 :body "Great"}))
-
-(defn make-routes [ch]
-  (http/ring-handler
-    (http/router
-     ["/"
-      {:get {:handler #(handle ch %1)}}])
-
-    (ring/create-default-handler)
-
-    {:executor reitit.interceptor.sieppari/executor
-     :interceptors [{:enter authorize}]}))
-
-(defn serve [exch]
-  (run-jetty (make-routes exch) {:port 3000 :async? true :join? false}))
+(defn runner [terms users exch]
+  (go-loop []
+    (<! (timeout 10000))
+    (let [c1 (not= terms (sheets/get-terms))
+          c2 (not= users (sheets/get-users))]
+      (if (or c1 c2)
+        (>! exch (Exception. "Change it up!"))))
+    (recur)))
 
 
 (defn -main [& args]
-  ;; TODO get terms... reget on error and use error channel to restart...
-  ;; (log/debug (str "Starting Main Process with terms: " terms))
   (let [terms (sheets/get-terms)
         followings (sheets/get-users)
         queue (create-queue (Integer/parseInt (env :t-queue-size)))
         exch (chan)
-        server (serve exch)
-        ;; publisher (db/make-publisher (env :jaws-topic))
-        ;; client (run publisher queue exch terms followings)
-      ]
+        publisher (db/make-publisher (env :jaws-topic))
+        client (run publisher queue exch terms followings)
+        _ (runner terms followings exch)
+        error (<!! exch)]
+
     (do
-      (log/info "LISTENING FOR ERRORS")
-      (let [error (<!! exch)]
-        (log/error error "Error tweeting!")
-        ;; (.stop client)
-        (throw error)))
-))
+      (log/error error "Error tweeting!")
+      (.stop client)
+      (throw error))))
