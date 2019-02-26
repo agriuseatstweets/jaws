@@ -17,7 +17,7 @@
         (tw/connect-queue queue terms followings))
     (catch Exception e (>!! exch e))))
 
-(def refresh-interval (* 1000 (Integer/parseInt (env :jaws-refresh-interval))))
+(defn refresh-interval [] (* 1000 (Integer/parseInt (env :jaws-refresh-interval))))
 
 (defn -main []
   (let [terms (sheets/get-terms)
@@ -27,7 +27,7 @@
         rech (chan)
         publisher (db/make-publisher (env :jaws-topic))
         client (run publisher queue exch terms followings)
-        _ (sheets/runner refresh-interval terms followings rech)
+        _ (sheets/runner (refresh-interval) terms followings rech)
         [news ch] (alts!! [exch rech])]
 
     (do
