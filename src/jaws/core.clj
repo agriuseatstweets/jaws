@@ -1,14 +1,6 @@
 (ns jaws.core
   (:gen-class)
-  (:require [clojure.core.async :refer [>! <! <!! >!! chan go-loop go timeout alts!]]
-            [reitit.http :as http]
-            [reitit.ring :as ring]
-            [reitit.core :as r]
-            [ring.adapter.jetty :refer [run-jetty]]
-            [muuntaja.interceptor]
-            [reitit.interceptor.sieppari]
-            [compojure.api.sweet :refer :all]
-            [ring.util.http-response :refer :all]
+  (:require [clojure.core.async :refer [>! <! <!! >!! alts!! chan go-loop go timeout alts!]]
             [jaws.db :as db]
             [jaws.twitter-client :as tw]
             [jaws.sheets :as sheets]
@@ -25,28 +17,21 @@
         (tw/connect-queue queue terms followings))
     (catch Exception e (>!! exch e))))
 
+(def refresh-interval (* 1000 (Integer/parseInt (env :jaws-refresh-interval))))
 
-(defn runner [terms users exch]
-  (go-loop []
-    (<! (timeout 10000))
-    (let [c1 (not= terms (sheets/get-terms))
-          c2 (not= users (sheets/get-users))]
-      (if (or c1 c2)
-        (>! exch (Exception. "Change it up!"))))
-    (recur)))
-
-
-(defn -main [& args]
+(defn -main []
   (let [terms (sheets/get-terms)
         followings (sheets/get-users)
         queue (create-queue (Integer/parseInt (env :t-queue-size)))
         exch (chan)
+        rech (chan)
         publisher (db/make-publisher (env :jaws-topic))
         client (run publisher queue exch terms followings)
-        _ (runner terms followings exch)
-        error (<!! exch)]
+        _ (sheets/runner refresh-interval terms followings rech)
+        [news ch] (alts!! [exch rech])]
 
     (do
-      (log/error error "Error tweeting!")
       (.stop client)
-      (throw error))))
+      (condp = ch
+        exch (do (log/error news "Error tweeting!") (throw news))
+        rech (do (log/info news) (recur))))))
