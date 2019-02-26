@@ -1,5 +1,6 @@
 (ns jaws.db
   (:require [cheshire.core :refer [parse-string]]
+            [jaws.utils :as u]
             [clojure.tools.logging :as log]
             [clojure.core.async :refer [>! <! <!! >!! chan go-loop go timeout]]
             [clojure.java.io :refer [input-stream]]
@@ -39,16 +40,7 @@
    (.setCredentialsProvider (credentials-provider))
    (.build)))
 
-
 (defn writer [publisher queue exch]
-  (doseq [n (range (Integer/parseInt (env :t-threads)))]
-    (go-loop []
-      (try
-        (let [msg (.poll queue)]
-          (if (nil? msg)
-            (<! (timeout 250)) ;; make variable
-            (do
-              (log/debug (str "Queue size: " (.size queue)))
-              (publish-message publisher msg exch))))
-        (catch Exception e (>! exch e)))
-      (recur))))
+  (let [threads (Integer/parseInt (env :t-threads)) 
+        f #(publish-message publisher % exch)]
+    (u/poller queue threads exch f)))
