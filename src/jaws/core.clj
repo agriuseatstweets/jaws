@@ -25,7 +25,7 @@
         rech (chan)
         publisher (db/make-publisher (env :jaws-topic))
         client (run publisher queue exch terms followings)
-        _ (sheets/runner (refresh-interval) terms followings rech)
+        _ (sheets/debounced-runner (refresh-interval) terms followings rech)
         [news ch] (alts!! [exch rech])]
 
     (do

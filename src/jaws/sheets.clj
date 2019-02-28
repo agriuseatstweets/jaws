@@ -53,15 +53,21 @@
          in (if new-val (recur new-val)))))
    in))
 
-(defn runner [interval og-terms og-users rech]
+(defn get-new-terms-and-users [terms users]
+  (try
+    [(get-terms) (get-users)]
+    (catch java.io.IOException e (do
+                                   (log/error e "Error Fetching Sheet")
+                                   [terms users]))))
 
-  ;; Use a debounced version of the channel
-  (let [ch (debounce rech (* 3 interval))]
-    (go-loop [terms og-terms 
-              users og-users]
-      (<! (timeout interval))
-      (let [new-terms (get-terms)
-            new-users (get-users)]
-        (if (or (not= new-terms terms) (not= new-users users))
-          (>! ch "Change it up!"))
-        (recur new-terms new-users)))))
+(defn runner [interval og-terms og-users ch]
+  (go-loop [terms og-terms
+            users og-users]
+    (<! (timeout interval))
+    (let [[new-terms new-users] (get-new-terms-and-users terms users)]
+      (if (or (not= new-terms terms) (not= new-users users))
+        (>! ch "Change it up!"))
+      (recur new-terms new-users))))
+
+(defn debounced-runner [interval og-terms og-users rech]
+  (runner interval og-terms og-users (debounce rech (* 3 interval))))
