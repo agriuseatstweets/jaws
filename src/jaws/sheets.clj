@@ -1,6 +1,6 @@
 (ns jaws.sheets
   (:gen-class)
-  (:require [clojure.core.async :refer [>! <! <!! >!! alts!! chan go-loop go timeout alts!]]
+  (:require [clojure.core.async :refer [>! <! <!! >!! alts!! chan go-loop go timeout alts! thread]]
             [clojure.tools.logging :as log]
             [clojure.java.io :refer [input-stream]]
             [environ.core :refer [env]])
@@ -54,17 +54,18 @@
    in))
 
 (defn get-new-terms-and-users [terms users]
-  (try
-    [(get-terms) (get-users)]
-    (catch java.io.IOException e (do
-                                   (log/error e "Error Fetching Sheet")
-                                   [terms users]))))
+  (thread
+    (try
+      [(get-terms) (get-users)]
+      (catch java.io.IOException e (do
+                                     (log/error e "Error Fetching Sheet")
+                                     [terms users])))))
 
 (defn runner [interval og-terms og-users ch]
   (go-loop [terms og-terms
             users og-users]
     (<! (timeout interval))
-    (let [[new-terms new-users] (get-new-terms-and-users terms users)]
+    (let [[new-terms new-users] (<! (get-new-terms-and-users terms users))]
       (if (or (not= new-terms terms) (not= new-users users))
         (>! ch "Change it up!"))
       (recur new-terms new-users))))

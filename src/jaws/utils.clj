@@ -5,8 +5,8 @@
 
 (defn create-queue [num] (LinkedBlockingQueue. num))
 
-(defn poller [queue threads exch f]
-  (doseq [n (range threads)]
+(defn poller [queue workers exch f]
+  (doseq [n (range workers)]
     (go-loop []
       (try
         (let [msg (.poll queue)]
@@ -14,6 +14,6 @@
             (<! (timeout 100))
             (do
               (log/debug (str "Queue size: " (.size queue)))
-              (f msg))))
+              (<! (f msg)))))
         (catch Exception e (>! exch e)))
       (recur))))

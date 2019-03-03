@@ -40,7 +40,7 @@ spec:
         - name: T_QUEUE_SIZE
           value: "250000"
         - name: T_THREADS
-          value: "4"
+          value: "20"
         - name: JVM_OPTS
           value: "-Xms512M -Xmx2048M"
         volumeMounts:
