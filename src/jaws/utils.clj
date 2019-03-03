@@ -1,7 +1,8 @@
 (ns jaws.utils
   (:require [clojure.tools.logging :as log]
             [clojure.core.async :refer [>! <! <!! >!! chan go-loop go timeout]])
-  (:import java.util.concurrent.LinkedBlockingQueue))
+  (:import java.util.concurrent.LinkedBlockingQueue
+           (clojure.core.async.impl.channels ManyToManyChannel)))
 
 (defn create-queue [num] (LinkedBlockingQueue. num))
 
@@ -12,8 +13,8 @@
         (let [msg (.poll queue)]
           (if (nil? msg)
             (<! (timeout 100))
-            (do
-              (log/debug (str "Queue size: " (.size queue)))
-              (<! (f msg)))))
+            (let [res (f msg)]
+              (if (instance? ManyToManyChannel res)
+                (<! res)))))
         (catch Exception e (>! exch e)))
       (recur))))

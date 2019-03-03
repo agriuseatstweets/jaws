@@ -1,7 +1,7 @@
 (ns jaws.twitter-client
      (:require [environ.core :refer [env]]
                [jaws.utils :as u]
-               [clojure.core.async :refer [>! <! <!! >!! chan go-loop go timeout alts! to-chan close!]])
+               [clojure.core.async :refer [>! <! <!! >!! chan go-loop go timeout alts!]])
      (:import (com.twitter.hbc
                ClientBuilder
                httpclient.auth.OAuth1
@@ -34,15 +34,14 @@
       (.build)))
 
 (defn event-handler [exch event]
-  ;; return go channel
   (condp = (.getEventType event)
     EventType/STOPPED_BY_ERROR (if-let [e (.getUnderlyingException event)]
                                  (>!! exch e)
                                  (>!! exch (Exception. (.getMessage event))))
-    :default))
+    nil))
 
 (defn eventer [queue exch]
-  (u/poller queue 2 exch #(to-chan [(event-handler exch %)])))
+  (u/poller queue 2 exch #(event-handler exch %)))
 
 (defn connect-client [client] (.connect client) client)
 
