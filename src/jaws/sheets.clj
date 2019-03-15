@@ -38,8 +38,8 @@
          (map clojure.string/trim))))
 
 (defn sheet-id [] (env :jaws-sheet-id))
-(defn get-users [] (get-range (sheet-id) "follows!A2:A"))
-(defn get-terms [] (get-range (sheet-id) "follows!B2:B"))
+(defn get-users [] (get-range (sheet-id) (env :jaws-sheet-users)))
+(defn get-terms [] (get-range (sheet-id) (env :jaws-sheet-terms)))
 
 (defn debounce
   ([out ms] (debounce (chan) out ms))
