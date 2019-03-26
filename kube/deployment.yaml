@@ -16,11 +16,11 @@ spec:
     spec:
       containers:
       - name: agrius-jaws
-        image: nandanrao/agrius-jaws
+        image: nandanrao/agrius-jaws:0.0.3
         resources:
           requests:
             cpu: "100m"
-            memory: "384Mi"
+            memory: "512Mi"
         ports:
         - containerPort: 5000
         envFrom:
@@ -34,15 +34,19 @@ spec:
         - name: JAWS_TOPIC
           value: "agrius-india"
         - name: JAWS_SHEET_ID
-          value: "1tTdi29asCLDT5uWxdhvizOhP6wVT-Y0HtAS9bsxizdY"
+          value: "1LzH7sHJX6WnFTpTIeSsNV1J_ep61SpugZY_SVQoSDjg"
+        - name: JAWS_SHEET_USERS
+          value: "follows!A2:A"
+        - name: JAWS_SHEET_TERMS
+          value: "follows!G2:G"
         - name: JAWS_REFRESH_INTERVAL
-          value: "20"
+          value: "30"
         - name: T_QUEUE_SIZE
-          value: "1000000" # should test sizes here
+          value: "1000000" 
         - name: T_THREADS
           value: "100"
-        - name: JVM_OPTS
-          value: "-Xms384M -Xmx2048M"
+        - name: JAVA_TOOL_OPTIONS
+          value: "-Xms256m -Xmx1024m -XX:MaxGCPauseMillis=1000"
         volumeMounts:
             - name: keys
               mountPath: /usr/src/app/keys
