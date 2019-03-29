@@ -24,8 +24,12 @@
     (ApiFutures/addCallback
      future
      (reify ApiFutureCallback
-       (onFailure [this throwable] (do (put! exch throwable) (close! ch)))
-       (onSuccess [this id] (do (log/debug (str "Success in Pub/Sub: " id)) (close! ch)))))
+       (onFailure [this throwable] (do 
+                                     (put! exch throwable) 
+                                     (close! ch)))
+       (onSuccess [this id] (do 
+                              (log/debug (str "Success in Pub/Sub: " id)) 
+                              (close! ch)))))
     ch))
 
 (defn publish-message
