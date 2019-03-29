@@ -9,10 +9,20 @@
             [clojure.java.io :refer [input-stream]]
             [environ.core :refer [env]]))
 
+(defn log-terms [terms followings]
+  (do
+    (log/info "STARTING CLIENT WITH: ")
+    (doseq [term terms]
+      (log/info (str "TERM: " term)))
+    (doseq [id followings]
+      (log/info (str "USER: " id)))))
+
 (defn run [publishers queue exch terms followings]
   (try
-    (do (db/writer publishers queue exch)
-        (tw/connect-queue queue terms followings exch))
+    (do 
+      (log-terms terms followings)
+      (db/writer publishers queue exch)
+      (tw/connect-queue queue terms followings exch))
     (catch Exception e (>!! exch e))))
 
 (defn refresh-interval [] (* 1000 (Integer/parseInt (env :jaws-refresh-interval))))

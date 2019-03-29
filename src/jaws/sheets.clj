@@ -2,6 +2,7 @@
   (:gen-class)
   (:require [clojure.core.async :refer [>! <! <!! >!! alts!! chan go-loop go timeout alts! thread]]
             [clojure.tools.logging :as log]
+            [clojure.string :as str]
             [clojure.java.io :refer [input-stream]]
             [environ.core :refer [env]])
   (:import com.google.api.client.http.javanet.NetHttpTransport
@@ -37,9 +38,17 @@
          (remove nil?)
          (map clojure.string/trim))))
 
+
+(defn format-url [url]  (str/join " " (str/split url #"\.")))
+(defn format-urls [urls] (map format-url urls))
+(defn sort-terms [tags urls] (concat tags (format-urls urls)))
+
 (defn sheet-id [] (env :jaws-sheet-id))
+(defn get-hashtags [] (get-range (sheet-id) (env :jaws-sheet-hashtags)))
+(defn get-urls [] (get-range (sheet-id) (env :jaws-sheet-urls)))
 (defn get-users [] (get-range (sheet-id) (env :jaws-sheet-users)))
-(defn get-terms [] (get-range (sheet-id) (env :jaws-sheet-terms)))
+
+(defn get-terms [] (sort-terms (get-hashtags) (get-urls)))
 
 (defn debounce
   ([out ms] (debounce (chan) out ms))

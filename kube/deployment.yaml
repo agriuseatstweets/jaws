@@ -37,8 +37,10 @@ spec:
           value: "1LzH7sHJX6WnFTpTIeSsNV1J_ep61SpugZY_SVQoSDjg"
         - name: JAWS_SHEET_USERS
           value: "follows!A2:A"
-        - name: JAWS_SHEET_TERMS
+        - name: JAWS_SHEET_HASHTAGS
           value: "follows!G2:G"
+        - name: JAWS_SHEET_URLS
+          value: "follows!E2:E"
         - name: JAWS_REFRESH_INTERVAL
           value: "30"
         - name: T_QUEUE_SIZE
