@@ -38,17 +38,22 @@
          (remove nil?)
          (map clojure.string/trim))))
 
-
-(defn format-url [url]  (str/join " " (str/split url #"\.")))
+(defn too-long? [term] (> (alength (.getBytes term "utf-8")) 60))
+(defn format-url [url]  (str/join " " (str/split url #"\.|\/")))
 (defn format-urls [urls] (map format-url urls))
-(defn sort-terms [tags urls] (concat tags (format-urls urls)))
+
+(defn sort-terms [tags urls] 
+  (->> 
+   (concat tags (format-urls urls))
+   (remove too-long?)))
 
 (defn sheet-id [] (env :jaws-sheet-id))
 (defn get-hashtags [] (get-range (sheet-id) (env :jaws-sheet-hashtags)))
 (defn get-urls [] (get-range (sheet-id) (env :jaws-sheet-urls)))
 (defn get-users [] (get-range (sheet-id) (env :jaws-sheet-users)))
 
-(defn get-terms [] (sort-terms (get-hashtags) (get-urls)))
+(defn get-terms [] 
+  (sort-terms (get-hashtags) (get-urls)))
 
 (defn debounce
   ([out ms] (debounce (chan) out ms))
