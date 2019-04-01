@@ -25,15 +25,21 @@
    (.setApplicationName "agrius-jaws")
    (.build)))
 
+(defn range-request [sheet-id ranges]
+  (-> (build-sheets)
+      (.spreadsheets)
+      (.values)
+      (.batchGet sheet-id)
+      (.setRanges ranges)
+      (.execute)
+      (get "valueRanges")))
+
 (defn get-range [sheet-id range]
-  (let [res (-> (build-sheets)
-                (.spreadsheets)
-                (.values)
-                (.get sheet-id range)
-                (.execute)
-                (get "values"))]
+  (let [ranges (str/split range #",")
+        res (range-request sheet-id ranges)]
     (->> res
-         (map seq)
+         (map #(get % "values"))
+         (map #(map seq %))
          (flatten)
          (remove nil?)
          (map clojure.string/trim))))
@@ -42,17 +48,19 @@
 (defn format-url [url]  (str/join " " (str/split url #"\.|\/")))
 (defn format-urls [urls] (map format-url urls))
 
-(defn sort-terms [tags urls] 
-  (->> 
+(defn sort-terms [tags urls]
+  (->>
    (concat tags (format-urls urls))
    (remove too-long?)))
 
 (defn sheet-id [] (env :jaws-sheet-id))
+
+
 (defn get-hashtags [] (get-range (sheet-id) (env :jaws-sheet-hashtags)))
 (defn get-urls [] (get-range (sheet-id) (env :jaws-sheet-urls)))
 (defn get-users [] (get-range (sheet-id) (env :jaws-sheet-users)))
 
-(defn get-terms [] 
+(defn get-terms []
   (sort-terms (get-hashtags) (get-urls)))
 
 (defn debounce
