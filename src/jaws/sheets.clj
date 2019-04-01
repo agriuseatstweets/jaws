@@ -35,7 +35,7 @@
       (get "valueRanges")))
 
 (defn get-range [sheet-id range]
-  (let [ranges (str/split range #",")
+  (let [ranges (map str/trim (str/split range #","))
         res (range-request sheet-id ranges)]
     (->> res
          (map #(get % "values"))
