@@ -24,11 +24,11 @@
     (ApiFutures/addCallback
      future
      (reify ApiFutureCallback
-       (onFailure [this throwable] (do 
-                                     (put! exch throwable) 
+       (onFailure [this throwable] (do
+                                     (log/error throwable)
                                      (close! ch)))
-       (onSuccess [this id] (do 
-                              (log/debug (str "Success in Pub/Sub: " id)) 
+       (onSuccess [this id] (do
+                              (log/debug (str "Success in Pub/Sub: " id))
                               (close! ch)))))
     ch))
 
