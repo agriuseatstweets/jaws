@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: agrius-jaws
-        image: nandanrao/agrius-jaws:0.0.6
+        image: nandanrao/agrius-jaws:0.0.8
         resources:
           requests:
             cpu: "100m"
@@ -38,13 +38,13 @@ spec:
         - name: JAWS_SHEET_USERS
           value: "follows!A2:A"
         - name: JAWS_SHEET_HASHTAGS
-          value: "follows!G2:G"
+          value: "follows!F2:F,follows!G2:G"
         - name: JAWS_SHEET_URLS
           value: "follows!E2:E"
         - name: JAWS_REFRESH_INTERVAL
           value: "30"
         - name: T_QUEUE_SIZE
-          value: "1000000" 
+          value: "1000000"
         - name: T_THREADS
           value: "100"
         - name: JAVA_TOOL_OPTIONS
