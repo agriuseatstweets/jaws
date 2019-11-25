@@ -8,8 +8,11 @@
                core.Client
                core.Constants
                core.endpoint.StatusesFilterEndpoint
-               core.processor.StringDelimitedProcessor)
+               core.processor.StringDelimitedProcessor
+               core.endpoint.Location
+               core.endpoint.Location$Coordinate)
               com.twitter.hbc.core.event.EventType))
+
 
 (defn create-auth []
   (OAuth1. (env :t-consumer-token)
@@ -17,10 +20,11 @@
            (env :t-access-token)
            (env :t-token-secret)))
 
-(defn create-endpoint [terms followings]
+(defn create-endpoint [terms followings locations]
   (-> (StatusesFilterEndpoint.)
       (.followings followings)
-      (.trackTerms terms)))
+      (.trackTerms terms)
+      (.locations locations)))
 
 (defn create-client
   "Creates unconnected Hosebird Client"
@@ -45,9 +49,14 @@
 
 (defn connect-client [client] (.connect client) client)
 
-(defn connect-queue [queue terms followings exch]
+(defn create-location [location-vec]
+  (let [[a b c d] location-vec]
+    (Location. (Location$Coordinate. a b) (Location$Coordinate. c d))))
+
+(defn connect-queue [queue terms followings locations-vecs exch]
   (let [auth (create-auth)
-        endpoint (create-endpoint terms followings)
+        locations (map create-location locations-vecs)
+        endpoint (create-endpoint terms followings locations)
         event-queue (u/create-queue 100)
         client (create-client auth endpoint queue event-queue)]
     (do

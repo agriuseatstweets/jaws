@@ -35,14 +35,14 @@
       (get "valueRanges")))
 
 (defn get-range [sheet-id range]
-  (let [ranges (map str/trim (str/split range #","))
+  (let [ranges (filter (complement str/blank?) (map str/trim (str/split range #",")))
         res (range-request sheet-id ranges)]
     (->> res
          (map #(get % "values"))
          (map #(map seq %))
          (flatten)
          (remove nil?)
-         (map clojure.string/trim))))
+         (map str/trim))))
 
 (defn too-long? [term] (> (alength (.getBytes term "utf-8")) 60))
 (defn format-url [url]  (str/join " " (str/split url #"\.|\/")))
@@ -55,10 +55,18 @@
 
 (defn sheet-id [] (env :jaws-sheet-id))
 
-
 (defn get-hashtags [] (get-range (sheet-id) (env :jaws-sheet-hashtags)))
 (defn get-urls [] (get-range (sheet-id) (env :jaws-sheet-urls)))
 (defn get-users [] (get-range (sheet-id) (env :jaws-sheet-users)))
+
+(defn clean-location [s]
+  (->> (str/split s #",")
+       (map str/trim)
+       (map #(Float/parseFloat %))))
+
+(defn get-locations []
+  (let [locs (get-range (sheet-id) (env :jaws-sheet-locations))]
+    (map clean-location locs)))
 
 (defn get-terms []
   (sort-terms (get-hashtags) (get-urls)))
@@ -75,22 +83,23 @@
          in (if new-val (recur new-val)))))
    in))
 
-(defn get-new-terms-and-users [terms users]
+(defn get-new-terms-and-users [terms users locations]
   (thread
     (try
-      [(get-terms) (get-users)]
+      [(get-terms) (get-users) (get-locations)]
       (catch java.io.IOException e (do
                                      (log/error e "Error Fetching Sheet")
                                      [terms users])))))
 
-(defn runner [interval og-terms og-users ch]
+(defn runner [interval og-terms og-users og-locations ch]
   (go-loop [terms og-terms
-            users og-users]
+            users og-users
+            locations og-locations]
     (<! (timeout interval))
-    (let [[new-terms new-users] (<! (get-new-terms-and-users terms users))]
-      (if (or (not= new-terms terms) (not= new-users users))
+    (let [[new-terms new-users new-locations] (<! (get-new-terms-and-users terms users locations))]
+      (if (or (not= new-terms terms) (not= new-users users) (not= new-locations locations))
         (>! ch "Change it up!"))
-      (recur new-terms new-users))))
+      (recur new-terms new-users new-locations))))
 
-(defn debounced-runner [interval og-terms og-users rech]
-  (runner interval og-terms og-users (debounce rech (* 3 interval))))
+(defn debounced-runner [interval og-terms og-users og-locations rech]
+  (runner interval og-terms og-users og-locations (debounce rech (* 3 interval))))
