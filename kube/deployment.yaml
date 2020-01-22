@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: agrius-jaws
-        image: nandanrao/agrius-jaws:0.0.8
+        image: nandanrao/agrius-jaws:0.0.10
         resources:
           requests:
             cpu: "100m"
