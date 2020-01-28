@@ -1,7 +1,5 @@
 (ns jaws.db
-  (:require [cheshire.core :refer [parse-string]]
-            [jaws.utils :as u]
-            [clojure.tools.logging :as log]
+  (:require [clojure.tools.logging :as log]
             [clojure.core.async :refer [>! <! <!! >!! chan go-loop go timeout put! close! thread]]
             [clojure.java.io :refer [input-stream]]
             [environ.core :refer [env]])
@@ -32,9 +30,8 @@
                               (close! ch)))))
     ch))
 
-(defn publish-message
-  [publisher data exch]
-  (add-callback exch (.publish publisher (build-message data))))
+
+
 
 (defn credentials-provider []
   (FixedCredentialsProvider/create
@@ -50,7 +47,9 @@
    (.setCredentialsProvider (credentials-provider))
    (.build)))
 
-(defn writer [publisher queue exch]
-  (let [threads (Integer/parseInt (env :t-threads))
-        f #(publish-message publisher % exch)]
-    (u/poller queue threads exch f)))
+(defn publish-message [publisher exch data]
+  (add-callback exch (.publish publisher (build-message data))))
+
+(defn publish-fn []
+  (let [publisher (make-publisher (env :jaws-topic))]
+    (partial publish-message publisher)))

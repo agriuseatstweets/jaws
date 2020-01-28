@@ -1,7 +1,8 @@
 (ns jaws.core
   (:gen-class)
   (:require [clojure.core.async :refer [>! <! <!! >!! alts!! chan go-loop go timeout alts!]]
-            [jaws.db :as db]
+            [jaws.db :as pubsub]
+            [jaws.kafka :as kafka]
             [jaws.utils :as u]
             [jaws.twitter-client :as tw]
             [jaws.sheets :as sheets]
@@ -17,15 +18,26 @@
     (doseq [id followings]
       (log/info (str "USER: " id)))))
 
-(defn run [publishers queue exch terms followings locations]
+;; take writer
+(defn run [queue exch terms followings locations]
   (try
     (do
       (log-terms terms followings)
-      (db/writer publishers queue exch)
       (tw/connect-queue queue terms followings locations exch))
     (catch Exception e (>!! exch e))))
 
 (defn refresh-interval [] (* 1000 (Integer/parseInt (env :jaws-refresh-interval))))
+
+(defn writer [f queue exch]
+  (let [threads (Integer/parseInt (env :t-threads))]
+    (u/poller queue threads exch (partial f exch))))
+
+(defn get-write-fn []
+  (let [q (env :jaws-queue)]
+    (cond
+      (= q "kafka") (kafka/publish-fn)
+      (= q "pubsub") (pubsub/publish-fn)
+      :else (throw (RuntimeException. (str "We don't have a queue that matches: " q))))))
 
 (defn -main []
   (let [terms (sheets/get-terms)
@@ -34,8 +46,8 @@
         queue (u/create-queue (Integer/parseInt (env :t-queue-size)))
         exch (chan)
         rech (chan)
-        publisher (db/make-publisher (env :jaws-topic))
-        client (run publisher queue exch terms followings locations)
+        _ (writer (get-write-fn) queue exch)
+        client (run queue exch terms followings locations)
         _ (sheets/debounced-runner (refresh-interval) terms followings locations rech)
         [news ch] (alts!! [exch rech])]
 

@@ -64,6 +64,8 @@
        (map str/trim)
        (map #(Float/parseFloat %))))
 
+
+;; TODO: throw informative error when format wrong
 (defn get-locations []
   (let [locs (get-range (sheet-id) (env :jaws-sheet-locations))]
     (map clean-location locs)))

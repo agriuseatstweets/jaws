@@ -14,6 +14,9 @@
           (if (nil? msg)
             (<! (timeout 100))
             (let [res (f msg)]
+
+              ;; if the function f returns a channel
+              ;; then block until it closes before looping
               (if (instance? ManyToManyChannel res)
                 (<! res)))))
         (catch Exception e (>! exch e)))

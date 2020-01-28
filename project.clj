@@ -8,6 +8,7 @@
                  [org.clojure/tools.logging "0.4.1"]
                  [ch.qos.logback/logback-classic "1.2.3"]
                  [com.twitter/hbc-core "2.2.0"]
+                 [spootnik/kinsky "0.1.23"]
                  [com.google.cloud/google-cloud-pubsub "1.59.0"]
                  [com.google.guava/guava "27.0.1-jre"]
                  [com.google.auth/google-auth-library-oauth2-http "0.13.0"]
