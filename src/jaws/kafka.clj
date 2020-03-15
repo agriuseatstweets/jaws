@@ -25,7 +25,7 @@
           (close! ch))
         (do
 
-          ;; send to exch if we want to continue...
+          ;; send to exch if we want to break and restart
           (log/error throwable)
           (close! ch))))))
 
