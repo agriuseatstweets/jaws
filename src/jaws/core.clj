@@ -20,11 +20,9 @@
 
 ;; take writer
 (defn run [queue exch terms followings locations]
-  (try
-    (do
+  (do
       (log-terms terms followings)
-      (tw/connect-queue queue terms followings locations exch))
-    (catch Exception e (>!! exch e))))
+      (tw/connect-queue queue terms followings locations exch)))
 
 (defn refresh-interval [] (* 1000 (Integer/parseInt (env :jaws-refresh-interval))))
 
