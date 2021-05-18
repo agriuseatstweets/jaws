@@ -1,2 +1,17 @@
 .env*
+secret.yaml
+/keys
+
+/target
+/classes
+/checkouts
+pom.xml
+pom.xml.asc
+*.jar
+*.class
+/.lein-*
+/.nrepl-port
+.hgignore
+.hg/
 profiles.clj
+envs.sh
